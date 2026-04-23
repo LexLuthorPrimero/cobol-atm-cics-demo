@@ -25,24 +25,43 @@
        01  WS-INPUT-PIN       PIC 9(4).
        01  WS-CHOICE          PIC X.
        01  WS-AMOUNT          PIC 9(7)V99.
+
+       01  WS-ACCOUNT-1.
+           05  WS1-ID         PIC 9(5).
+           05  WS1-PIN        PIC 9(4).
+           05  WS1-NAME       PIC X(20).
+           05  WS1-BALANCE    PIC 9(7)V99.
+       01  WS-ACCOUNT-2.
+           05  WS2-ID         PIC 9(5).
+           05  WS2-PIN        PIC 9(4).
+           05  WS2-NAME       PIC X(20).
+           05  WS2-BALANCE    PIC 9(7)V99.
+       01  WS-ACCOUNT-3.
+           05  WS3-ID         PIC 9(5).
+           05  WS3-PIN        PIC 9(4).
+           05  WS3-NAME       PIC X(20).
+           05  WS3-BALANCE    PIC 9(7)V99.
+       01  WS-ACCOUNT-4.
+           05  WS4-ID         PIC 9(5).
+           05  WS4-PIN        PIC 9(4).
+           05  WS4-NAME       PIC X(20).
+           05  WS4-BALANCE    PIC 9(7)V99.
+       01  WS-ACCOUNT-5.
+           05  WS5-ID         PIC 9(5).
+           05  WS5-PIN        PIC 9(4).
+           05  WS5-NAME       PIC X(20).
+           05  WS5-BALANCE    PIC 9(7)V99.
+
+       01  WS-CURRENT-INDEX   PIC 9 VALUE 0.
        01  WS-FOUND           PIC X VALUE 'N'.
            88  ACCOUNT-FOUND  VALUE 'S'.
-       01  WS-CURRENT-INDEX   PIC 9(2) VALUE 0.
-       01  WS-MAX-CUENTAS     PIC 9(2) VALUE 5.
-       01  WS-TEMP            PIC X(36).
 
-       01  WS-CUENTAS-TABLE.
-           05  WS-CUENTA OCCURS 5 TIMES INDEXED BY I.
-               10  WS-CUENTA-ID      PIC 9(5).
-               10  WS-CUENTA-PIN     PIC 9(4).
-               10  WS-CUENTA-NAME    PIC X(20).
-               10  WS-CUENTA-BALANCE PIC 9(7)V99.
-
-       01  WS-IDX              PIC 9(2).
+       01  WS-CURRENT-NAME    PIC X(20).
+       01  WS-CURRENT-BALANCE PIC 9(7)V99.
 
        PROCEDURE DIVISION.
        MAIN.
-           PERFORM CARGA-TABLA
+           PERFORM CARGA-CUENTAS
            DISPLAY '============================================'
            DISPLAY '   CAJERO AUTOMATICO - SIMULACION CICS      '
            DISPLAY '============================================'
@@ -51,47 +70,73 @@
            DISPLAY 'INGRESE SU PIN: ' WITH NO ADVANCING
            ACCEPT WS-INPUT-PIN
 
-           PERFORM VALIDAR-USUARIO
+           PERFORM VALIDAR-CUENTA
            IF NOT ACCOUNT-FOUND
                DISPLAY 'CUENTA NO ENCONTRADA O PIN INCORRECTO'
-               PERFORM GUARDAR-TABLA
+               PERFORM GUARDAR-CUENTAS
                STOP RUN
            END-IF
 
+           MOVE WS-CURRENT-NAME TO WS-CURRENT-NAME
+           MOVE WS-CURRENT-BALANCE TO WS-CURRENT-BALANCE
            PERFORM MENU UNTIL WS-CHOICE = 'S' OR WS-CHOICE = 's'
-           PERFORM GUARDAR-TABLA
+
+           PERFORM GUARDAR-CUENTAS
            DISPLAY 'GRACIAS POR SU VISITA'
            STOP RUN.
 
-       CARGA-TABLA.
+       CARGA-CUENTAS.
            OPEN INPUT ACCOUNTS-FILE
            IF NOT ACCOUNTS-OK
                DISPLAY 'ERROR AL ABRIR CUENTAS'
                STOP RUN
            END-IF
-           MOVE 0 TO WS-IDX
-           PERFORM VARYING I FROM 1 BY 1 UNTIL I > WS-MAX-CUENTAS
-               READ ACCOUNTS-FILE INTO WS-CUENTA(I)
-                   AT END CONTINUE
-               END-READ
-           END-PERFORM
+
+           READ ACCOUNTS-FILE INTO WS-ACCOUNT-1
+           READ ACCOUNTS-FILE INTO WS-ACCOUNT-2
+           READ ACCOUNTS-FILE INTO WS-ACCOUNT-3
+           READ ACCOUNTS-FILE INTO WS-ACCOUNT-4
+           READ ACCOUNTS-FILE INTO WS-ACCOUNT-5
+
            CLOSE ACCOUNTS-FILE.
 
-       VALIDAR-USUARIO.
+       VALIDAR-CUENTA.
            MOVE 'N' TO WS-FOUND
-           PERFORM VARYING I FROM 1 BY 1 UNTIL I > WS-MAX-CUENTAS
-                        OR ACCOUNT-FOUND
-               IF WS-CUENTA-ID(I) = WS-INPUT-ID AND
-                  WS-CUENTA-PIN(I) = WS-INPUT-PIN
-                   SET ACCOUNT-FOUND TO TRUE
-                   MOVE I TO WS-CURRENT-INDEX
-               END-IF
-           END-PERFORM.
+           IF WS-INPUT-ID = WS1-ID AND WS-INPUT-PIN = WS1-PIN
+               MOVE 1 TO WS-CURRENT-INDEX
+               MOVE 'S' TO WS-FOUND
+           END-IF
+           IF WS-INPUT-ID = WS2-ID AND WS-INPUT-PIN = WS2-PIN
+               MOVE 2 TO WS-CURRENT-INDEX
+               MOVE 'S' TO WS-FOUND
+           END-IF
+           IF WS-INPUT-ID = WS3-ID AND WS-INPUT-PIN = WS3-PIN
+               MOVE 3 TO WS-CURRENT-INDEX
+               MOVE 'S' TO WS-FOUND
+           END-IF
+           IF WS-INPUT-ID = WS4-ID AND WS-INPUT-PIN = WS4-PIN
+               MOVE 4 TO WS-CURRENT-INDEX
+               MOVE 'S' TO WS-FOUND
+           END-IF
+           IF WS-INPUT-ID = WS5-ID AND WS-INPUT-PIN = WS5-PIN
+               MOVE 5 TO WS-CURRENT-INDEX
+               MOVE 'S' TO WS-FOUND
+           END-IF.
 
        MENU.
            DISPLAY ' '
-           DISPLAY 'BIENVENIDO/A ' WS-CUENTA-NAME(WS-CURRENT-INDEX)
-           DISPLAY 'SALDO ACTUAL: $' WS-CUENTA-BALANCE(WS-CURRENT-INDEX)
+           EVALUATE WS-CURRENT-INDEX
+               WHEN 1 DISPLAY 'BIENVENIDO/A ' WS1-NAME
+                      DISPLAY 'SALDO ACTUAL: $' WS1-BALANCE
+               WHEN 2 DISPLAY 'BIENVENIDO/A ' WS2-NAME
+                      DISPLAY 'SALDO ACTUAL: $' WS2-BALANCE
+               WHEN 3 DISPLAY 'BIENVENIDO/A ' WS3-NAME
+                      DISPLAY 'SALDO ACTUAL: $' WS3-BALANCE
+               WHEN 4 DISPLAY 'BIENVENIDO/A ' WS4-NAME
+                      DISPLAY 'SALDO ACTUAL: $' WS4-BALANCE
+               WHEN 5 DISPLAY 'BIENVENIDO/A ' WS5-NAME
+                      DISPLAY 'SALDO ACTUAL: $' WS5-BALANCE
+           END-EVALUATE
            DISPLAY ' '
            DISPLAY 'Opciones:'
            DISPLAY '  1. DEPOSITAR'
@@ -102,49 +147,84 @@
            ACCEPT WS-CHOICE
 
            EVALUATE WS-CHOICE
-               WHEN '1' PERFORM DO-DEPOSIT
-               WHEN '2' PERFORM DO-WITHDRAW
-               WHEN '3' PERFORM SHOW-BALANCE
+               WHEN '1' PERFORM DEPOSITAR
+               WHEN '2' PERFORM RETIRAR
+               WHEN '3' PERFORM MOSTRAR-SALDO
                WHEN 'S' CONTINUE
                WHEN 's' CONTINUE
                WHEN OTHER DISPLAY 'OPCION NO VALIDA'
            END-EVALUATE.
 
-       DO-DEPOSIT.
+       DEPOSITAR.
            DISPLAY 'MONTO A DEPOSITAR: ' WITH NO ADVANCING
            ACCEPT WS-AMOUNT
            IF WS-AMOUNT <= 0
                DISPLAY 'MONTO INVALIDO'
            ELSE
-               ADD WS-AMOUNT TO WS-CUENTA-BALANCE(WS-CURRENT-INDEX)
+               EVALUATE WS-CURRENT-INDEX
+                   WHEN 1 ADD WS-AMOUNT TO WS1-BALANCE
+                   WHEN 2 ADD WS-AMOUNT TO WS2-BALANCE
+                   WHEN 3 ADD WS-AMOUNT TO WS3-BALANCE
+                   WHEN 4 ADD WS-AMOUNT TO WS4-BALANCE
+                   WHEN 5 ADD WS-AMOUNT TO WS5-BALANCE
+               END-EVALUATE
                DISPLAY 'DEPOSITO EXITOSO'
            END-IF.
 
-       DO-WITHDRAW.
+       RETIRAR.
            DISPLAY 'MONTO A RETIRAR: ' WITH NO ADVANCING
            ACCEPT WS-AMOUNT
-           IF WS-AMOUNT > WS-CUENTA-BALANCE(WS-CURRENT-INDEX)
-               DISPLAY 'FONDOS INSUFICIENTES'
-           ELSE IF WS-AMOUNT <= 0
+           IF WS-AMOUNT <= 0
                DISPLAY 'MONTO INVALIDO'
            ELSE
-               SUBTRACT WS-AMOUNT FROM
-                   WS-CUENTA-BALANCE(WS-CURRENT-INDEX)
-               DISPLAY 'RETIRO EXITOSO'
+               EVALUATE WS-CURRENT-INDEX
+                   WHEN 1 IF WS-AMOUNT > WS1-BALANCE
+                           DISPLAY 'FONDOS INSUFICIENTES'
+                          ELSE
+                           SUBTRACT WS-AMOUNT FROM WS1-BALANCE
+                           DISPLAY 'RETIRO EXITOSO'
+                          END-IF
+                   WHEN 2 IF WS-AMOUNT > WS2-BALANCE
+                           DISPLAY 'FONDOS INSUFICIENTES'
+                          ELSE
+                           SUBTRACT WS-AMOUNT FROM WS2-BALANCE
+                           DISPLAY 'RETIRO EXITOSO'
+                          END-IF
+                   WHEN 3 IF WS-AMOUNT > WS3-BALANCE
+                           DISPLAY 'FONDOS INSUFICIENTES'
+                          ELSE
+                           SUBTRACT WS-AMOUNT FROM WS3-BALANCE
+                           DISPLAY 'RETIRO EXITOSO'
+                          END-IF
+                   WHEN 4 IF WS-AMOUNT > WS4-BALANCE
+                           DISPLAY 'FONDOS INSUFICIENTES'
+                          ELSE
+                           SUBTRACT WS-AMOUNT FROM WS4-BALANCE
+                           DISPLAY 'RETIRO EXITOSO'
+                          END-IF
+                   WHEN 5 IF WS-AMOUNT > WS5-BALANCE
+                           DISPLAY 'FONDOS INSUFICIENTES'
+                          ELSE
+                           SUBTRACT WS-AMOUNT FROM WS5-BALANCE
+                           DISPLAY 'RETIRO EXITOSO'
+                          END-IF
+               END-EVALUATE
            END-IF.
 
-       SHOW-BALANCE.
-           DISPLAY 'SALDO DISPONIBLE: $'
-               WS-CUENTA-BALANCE(WS-CURRENT-INDEX).
+       MOSTRAR-SALDO.
+           EVALUATE WS-CURRENT-INDEX
+               WHEN 1 DISPLAY 'SALDO DISPONIBLE: $' WS1-BALANCE
+               WHEN 2 DISPLAY 'SALDO DISPONIBLE: $' WS2-BALANCE
+               WHEN 3 DISPLAY 'SALDO DISPONIBLE: $' WS3-BALANCE
+               WHEN 4 DISPLAY 'SALDO DISPONIBLE: $' WS4-BALANCE
+               WHEN 5 DISPLAY 'SALDO DISPONIBLE: $' WS5-BALANCE
+           END-EVALUATE.
 
-       GUARDAR-TABLA.
+       GUARDAR-CUENTAS.
            OPEN OUTPUT ACCOUNTS-FILE
-           IF NOT ACCOUNTS-OK
-               DISPLAY 'ERROR AL GUARDAR CAMBIOS'
-           ELSE
-               PERFORM VARYING I FROM 1 BY 1 UNTIL I > WS-MAX-CUENTAS
-                   MOVE WS-CUENTA(I) TO ACCOUNT-RECORD
-                   WRITE ACCOUNT-RECORD
-               END-PERFORM
-           END-IF
+           WRITE ACCOUNT-RECORD FROM WS-ACCOUNT-1
+           WRITE ACCOUNT-RECORD FROM WS-ACCOUNT-2
+           WRITE ACCOUNT-RECORD FROM WS-ACCOUNT-3
+           WRITE ACCOUNT-RECORD FROM WS-ACCOUNT-4
+           WRITE ACCOUNT-RECORD FROM WS-ACCOUNT-5
            CLOSE ACCOUNTS-FILE.

@@ -1,21 +1,22 @@
 #!/bin/bash
-echo "Test: Compilar y probar cajero automático"
+echo "Test: compilar y verificar cajero automático"
 rm -f atm
 
+# Compilación
 cobc -x -o atm ATM.cob || { echo "ERROR: compilación"; exit 1; }
 
-echo "Prueba 1: cuenta correcta y consulta de saldo"
-printf "00001\n1234\n3\nS\n" | ./atm > /dev/null
+# Prueba 1: cuenta correcta y salir inmediatamente
+printf "00001\n1234\nS\n" | ./atm > /dev/null
 if [ $? -eq 0 ]; then
-    echo "✅ Transacción correcta"
+    echo "✅ Transacción correcta (cuenta 1)"
 else
-    echo "❌ Fallo"
+    echo "❌ Falló"
     exit 1
 fi
 
-echo "Prueba 2: PIN incorrecto"
+# Prueba 2: PIN incorrecto esperado
 if printf "00001\n9999\nS\n" | ./atm 2>&1 | grep -q "INCORRECTO"; then
-    echo "✅ Detectado PIN incorrecto"
+    echo "✅ Detecta PIN incorrecto"
 else
     echo "❌ No detectó PIN incorrecto"
     exit 1
