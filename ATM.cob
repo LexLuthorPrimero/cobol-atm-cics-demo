@@ -1,3 +1,4 @@
+      *> Version estable sin acentos
        IDENTIFICATION DIVISION.
        PROGRAM-ID. ATM.
        AUTHOR. LUCAS-CANETE.
