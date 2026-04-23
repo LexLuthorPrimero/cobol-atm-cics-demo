@@ -1,19 +1,12 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID. ATM.
        AUTHOR. LUCAS-CANETE.
-      *================================================================*
-      * PROGRAMA : CAJERO AUTOMÁTICO (SIMULACIÓN CICS)                 *
-      * ENTRADA  : ARCHIVO DE CUENTAS (VSAM SIMULADO)                  *
-      * SALIDA   : MENSAJES EN PANTALLA, ACTUALIZA SALDOS              *
-      * NOTA     : IMPLEMENTA PRÁCTICAS PROFESIONALES, CÓDIGO LIMPIO   *
-      *================================================================*
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
            SELECT ACCOUNTS-FILE ASSIGN TO 'ACCOUNTS.DAT'
                ORGANIZATION IS LINE SEQUENTIAL
                FILE STATUS IS WS-ACCOUNTS-STATUS.
-
        DATA DIVISION.
        FILE SECTION.
        FD  ACCOUNTS-FILE.
@@ -24,7 +17,6 @@
            05  ACC-BALANCE    PIC 9(7)V99.
 
        WORKING-STORAGE SECTION.
-      *--- Variables de estado y control --------------------------
        01  WS-ACCOUNTS-STATUS PIC X(2).
            88  ACCOUNTS-OK    VALUE '00'.
            88  ACCOUNTS-EOF   VALUE '10'.
@@ -37,16 +29,20 @@
        01  WS-FOUND           PIC X VALUE 'N'.
            88  ACCOUNT-FOUND  VALUE 'S'.
 
+       01  WS-CURRENT-RECORD  PIC X(36).
+       01  WS-UPDATED-RECORD  PIC X(36).
+
        01  WS-CURRENT-NAME    PIC X(20).
        01  WS-CURRENT-BALANCE PIC 9(7)V99.
 
+       01  WS-TEMP-RECORD     PIC X(36).
+
        01  WS-MESSAGE         PIC X(60).
 
-      *-----------------------------------------------------------------
        PROCEDURE DIVISION.
        MAIN.
            DISPLAY '============================================'
-           DISPLAY '   CAJERO AUTOMÁTICO - SIMULACIÓN CICS      '
+           DISPLAY '   CAJERO AUTOMATICO - SIMULACION CICS      '
            DISPLAY '============================================'
            DISPLAY 'INGRESE SU ID: ' WITH NO ADVANCING
            ACCEPT WS-INPUT-ID
@@ -64,7 +60,6 @@
            DISPLAY 'GRACIAS POR SU VISITA'
            STOP RUN.
 
-      *--- Validar cuenta contra archivo ----------------------------
        VALIDATE-ACCOUNT.
            OPEN INPUT ACCOUNTS-FILE
            IF NOT ACCOUNTS-OK
@@ -83,12 +78,12 @@
                            MOVE 'S' TO WS-FOUND
                            MOVE ACC-NAME TO WS-CURRENT-NAME
                            MOVE ACC-BALANCE TO WS-CURRENT-BALANCE
+                           MOVE ACCOUNT-RECORD TO WS-CURRENT-RECORD
                        END-IF
                END-READ
            END-PERFORM
            CLOSE ACCOUNTS-FILE.
 
-      *--- Menú transaccional (CICS) ---------------------------------
        MENU.
            DISPLAY ' '
            DISPLAY 'BIENVENIDO/A ' WS-CURRENT-NAME
@@ -117,12 +112,11 @@
                    DISPLAY 'OPCION NO VALIDA'
            END-EVALUATE.
 
-      *--- Operaciones -------------------------------------------------
        DO-DEPOSIT.
            DISPLAY 'MONTO A DEPOSITAR: ' WITH NO ADVANCING
            ACCEPT WS-AMOUNT
            IF WS-AMOUNT <= 0
-               DISPLAY 'MONTO INVÁLIDO'
+               DISPLAY 'MONTO INVALIDO'
            ELSE
                ADD WS-AMOUNT TO WS-CURRENT-BALANCE
                PERFORM UPDATE-ACCOUNT
@@ -134,7 +128,7 @@
            IF WS-AMOUNT > WS-CURRENT-BALANCE
                DISPLAY 'FONDOS INSUFICIENTES'
            ELSE IF WS-AMOUNT <= 0
-               DISPLAY 'MONTO INVÁLIDO'
+               DISPLAY 'MONTO INVALIDO'
            ELSE
                SUBTRACT WS-AMOUNT FROM WS-CURRENT-BALANCE
                PERFORM UPDATE-ACCOUNT
@@ -143,24 +137,27 @@
        SHOW-BALANCE.
            DISPLAY 'SALDO DISPONIBLE: $' WS-CURRENT-BALANCE.
 
-      *--- Actualizar saldo en archivo (simula COMMIT DB2) -----------
        UPDATE-ACCOUNT.
-           OPEN I-O ACCOUNTS-FILE
+           OPEN INPUT ACCOUNTS-FILE
+           OPEN OUTPUT ACCOUNTS-FILE
            IF NOT ACCOUNTS-OK
                DISPLAY 'ERROR AL ACTUALIZAR CUENTA'
                EXIT PARAGRAPH
            END-IF
-
            MOVE 'N' TO WS-FOUND
-           PERFORM UNTIL ACCOUNT-FOUND OR ACCOUNTS-EOF
-               READ ACCOUNTS-FILE INTO ACCOUNT-RECORD
+           PERFORM UNTIL ACCOUNTS-EOF
+               READ ACCOUNTS-FILE INTO WS-TEMP-RECORD
                    AT END
                        CONTINUE
                    NOT AT END
-                       IF ACC-ID = WS-INPUT-ID
-                           REWRITE ACCOUNT-RECORD
-                               FROM WS-CURRENT-NAME
-                           SET ACCOUNT-FOUND TO TRUE
+                       IF WS-TEMP-RECORD(1:5) = WS-INPUT-ID
+                           MOVE WS-INPUT-ID TO ACC-ID
+                           MOVE WS-INPUT-PIN TO ACC-PIN
+                           MOVE WS-CURRENT-NAME TO ACC-NAME
+                           MOVE WS-CURRENT-BALANCE TO ACC-BALANCE
+                           WRITE ACCOUNT-RECORD
+                       ELSE
+                           WRITE WS-TEMP-RECORD FROM WS-TEMP-RECORD
                        END-IF
                END-READ
            END-PERFORM
