@@ -19,7 +19,7 @@
        01  WS-ACCOUNTS-STATUS PIC X(2).
            88  ACCOUNTS-OK    VALUE '00'.
        01  WS-INPUT-ID        PIC 9(5).
-       01  WS-INPUT-PIN       PIC 9(4).
+       01  WS-INPUT-PINN       PIC 9(4).
        01  WS-FOUND           PIC X VALUE 'N'.
            88  ACCOUNT-FOUND  VALUE 'S'.
        01  WS-CURRENT-NAME    PIC X(20).
@@ -30,13 +30,13 @@
            DISPLAY 'INGRESE SU ID: ' WITH NO ADVANCING
            ACCEPT WS-INPUT-ID
            DISPLAY 'INGRESE SU PIN: ' WITH NO ADVANCING
-           ACCEPT WS-INPUT-PIN
+           ACCEPT WS-INPUT-PINN
            MOVE 'N' TO WS-FOUND
            PERFORM UNTIL ACCOUNT-FOUND OR WS-ACCOUNTS-STATUS NOT = '00'
                READ ACCOUNTS-FILE INTO ACCOUNT-RECORD
                    AT END CONTINUE
                    NOT AT END
-                       IF ACC-ID = WS-INPUT-ID AND ACC-PIN = WS-INPUT-PIN
+                       IF ACC-ID = WS-INPUT-ID AND ACC-PIN = WS-INPUT-PINN
                            MOVE 'S' TO WS-FOUND
                            MOVE ACC-NAME TO WS-CURRENT-NAME
                            MOVE ACC-BALANCE TO WS-CURRENT-BALANCE
