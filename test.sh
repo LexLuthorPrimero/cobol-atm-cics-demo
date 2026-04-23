@@ -1,25 +1,9 @@
 #!/bin/bash
-echo "Test: compilar y verificar cajero automático"
+echo "Test: compilar y probar autenticacion"
 rm -f atm
-
-# Compilación
-cobc -x -o atm ATM.cob || { echo "ERROR: compilación"; exit 1; }
-
-# Prueba 1: cuenta correcta y salir inmediatamente
-printf "00001\n1234\nS\n" | ./atm > /dev/null
-if [ $? -eq 0 ]; then
-    echo "✅ Transacción correcta (cuenta 1)"
-else
-    echo "❌ Falló"
-    exit 1
-fi
-
-# Prueba 2: PIN incorrecto esperado
-if printf "00001\n9999\nS\n" | ./atm 2>&1 | grep -q "INCORRECTO"; then
-    echo "✅ Detecta PIN incorrecto"
-else
-    echo "❌ No detectó PIN incorrecto"
-    exit 1
-fi
-
-echo "✅ Todos los tests pasaron"
+cobc -x -o atm ATM.cob || { echo "ERROR: compilacion"; exit 1; }
+# Prueba 1: cuenta correcta
+printf "00001\n1234\n" | ./atm | grep -q "BIENVENIDO" || { echo "Fallo autenticacion"; exit 1; }
+# Prueba 2: PIN incorrecto
+printf "00001\n9999\n" | ./atm | grep -q "INCORRECTO" || { echo "No detecto PIN incorrecto"; exit 1; }
+echo "✅ Tests superados"
